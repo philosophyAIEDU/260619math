@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>미분·적분 시각화 학습</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-light: #818cf8;
+    --primary-dark: #3730a3;
+    --secondary: #7c3aed;
+    --bg: #f0f4ff;
+    --bg-card: #ffffff;
+    --text: #1e1b4b;
+    --text-muted: #6b7280;
+    --success: #059669;
+    --success-bg: #d1fae5;
+    --warn: #d97706;
+    --warn-bg: #fef3c7;
+    --border: #e0e7ff;
+    --graph-bg: #f8f9ff;
+    --shadow: 0 4px 24px rgba(79,70,229,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 16px;
+  }
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ===== TOP NAV ===== */
+  .topnav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(79,70,229,0.06);
+  }
+  .topnav .logo { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+  .topnav .nav-actions { display: flex; gap: 10px; align-items: center; }
+  .btn-icon {
+    background: none; border: none; cursor: pointer;
+    font-size: 1.3rem; padding: 4px 8px; border-radius: 8px;
+    transition: background 0.15s;
+  }
+  .btn-icon:hover { background: var(--border); }
+  .btn-back {
+    background: none; border: none; cursor: pointer;
+    color: var(--primary); font-size: 0.95rem; font-weight: 600;
+    padding: 6px 12px; border-radius: 8px; transition: background 0.15s;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .btn-back:hover { background: var(--border); }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 12px 28px; border-radius: 14px; font-size: 1rem;
+    font-weight: 700; cursor: pointer; border: none;
+    transition: all 0.18s; gap: 8px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: #fff; box-shadow: 0 4px 14px rgba(79,70,229,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); }
+  .btn-outline {
+    background: var(--bg-card); color: var(--primary);
+    border: 2px solid var(--primary-light);
+  }
+  .btn-outline:hover { background: var(--border); }
+  .btn-sm { padding: 8px 18px; font-size: 0.9rem; border-radius: 10px; }
+  .btn-step {
+    padding: 9px 18px; border-radius: 10px; font-size: 0.9rem;
+    font-weight: 600; cursor: pointer; border: 2px solid var(--border);
+    background: var(--bg-card); color: var(--text-muted); transition: all 0.15s;
+  }
+  .btn-step.active {
+    background: var(--primary); color: #fff; border-color: var(--primary);
+  }
+  .btn-step:hover:not(.active) { border-color: var(--primary-light); color: var(--primary); }
+
+  /* ===== SCREEN 1: START ===== */
+  #screen-start {
+    align-items: center; justify-content: center;
+    background: linear-gradient(160deg, #eef2ff 0%, #f5f3ff 50%, #ede9fe 100%);
+  }
+  .start-gear {
+    position: fixed; top: 18px; right: 22px;
+    background: none; border: none; cursor: pointer;
+    font-size: 1.5rem; padding: 6px; border-radius: 10px;
+    transition: background 0.15s;
+  }
+  .start-gear:hover { background: rgba(79,70,229,0.08); }
+  .start-content {
+    text-align: center; max-width: 480px; padding: 32px 24px;
+  }
+  .start-icon { font-size: 4rem; margin-bottom: 16px; }
+  .start-title { font-size: 2.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 10px; line-height: 1.2; }
+  .start-subtitle { font-size: 1.05rem; color: var(--text-muted); margin-bottom: 36px; line-height: 1.7; }
+  .start-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .start-btns .btn { font-size: 1.1rem; padding: 16px 36px; }
+  .start-badge {
+    display: inline-block; margin-top: 32px; font-size: 0.85rem;
+    color: var(--text-muted); background: rgba(79,70,229,0.06);
+    padding: 6px 16px; border-radius: 20px;
+  }
+
+  /* ===== CONCEPT SCREENS ===== */
+  .concept-body {
+    flex: 1; display: flex; gap: 0; overflow: hidden;
+  }
+  .concept-left {
+    flex: 1.1; min-width: 0;
+    background: var(--graph-bg);
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--border);
+    padding: 20px;
+  }
+  .concept-right {
+    flex: 0.9; min-width: 280px; max-width: 400px;
+    padding: 24px 22px;
+    display: flex; flex-direction: column; gap: 16px;
+    overflow-y: auto;
+  }
+  canvas { display: block; border-radius: 12px; background: #fff; box-shadow: var(--shadow); }
+  .graph-label {
+    font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; text-align: center;
+  }
+  .slider-row {
+    display: flex; align-items: center; gap: 12px; margin-top: 12px;
+  }
+  .slider-row label { font-size: 0.9rem; color: var(--text-muted); min-width: 60px; }
+  input[type=range] {
+    flex: 1; accent-color: var(--primary);
+    height: 6px; cursor: pointer;
+  }
+  .slider-val {
+    font-size: 1rem; font-weight: 700; color: var(--primary);
+    min-width: 48px; text-align: right;
+  }
+  .concept-card {
+    background: var(--bg-card); border-radius: 14px;
+    padding: 18px; border: 1px solid var(--border);
+  }
+  .concept-card h3 { font-size: 1rem; color: var(--primary-dark); margin-bottom: 8px; }
+  .concept-card p { font-size: 0.95rem; color: var(--text); line-height: 1.7; }
+  .info-box {
+    background: linear-gradient(135deg, #eef2ff, #ede9fe);
+    border-radius: 12px; padding: 14px 16px;
+    border-left: 4px solid var(--primary);
+  }
+  .info-box p { font-size: 0.93rem; line-height: 1.7; color: var(--text); }
+  .steps-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stat-box {
+    background: #fff; border-radius: 10px;
+    padding: 12px 16px; border: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-label { font-size: 0.82rem; color: var(--text-muted); }
+  .stat-val { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+  .stats-row { display: flex; gap: 10px; }
+  .stats-row .stat-box { flex: 1; }
+  .section-title { font-size: 1.1rem; font-weight: 700; color: var(--primary-dark); }
+
+  /* ===== SCREEN 3: PRACTICE ===== */
+  #screen-practice {
+    background: var(--bg);
+  }
+  .practice-body {
+    flex: 1; max-width: 680px; margin: 0 auto; width: 100%;
+    padding: 28px 20px; display: flex; flex-direction: column; gap: 20px;
+  }
+  .practice-tabs {
+    display: flex; gap: 8px; background: var(--bg-card);
+    padding: 6px; border-radius: 14px; border: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1; padding: 10px; border: none; background: none;
+    border-radius: 10px; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; color: var(--text-muted); transition: all 0.15s;
+  }
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,0.25);
+  }
+  .progress-bar-wrap {
+    background: var(--border); border-radius: 99px; height: 8px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    transition: width 0.4s ease;
+  }
+  .progress-info {
+    display: flex; justify-content: space-between;
+    font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;
+  }
+  .question-card {
+    background: var(--bg-card); border-radius: 18px;
+    padding: 28px; border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .q-number {
+    font-size: 0.85rem; color: var(--primary); font-weight: 700;
+    margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .q-text {
+    font-size: 1.15rem; font-weight: 700; color: var(--text);
+    margin-bottom: 22px; line-height: 1.5;
+  }
+  .options-grid { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; border-radius: 12px;
+    border: 2px solid var(--border); background: var(--bg-card);
+    font-size: 1rem; cursor: pointer; text-align: left;
+    transition: all 0.15s; width: 100%; color: var(--text);
+    font-weight: 500;
+  }
+  .option-btn:hover:not(:disabled) { border-color: var(--primary-light); background: #f0f4ff; }
+  .option-btn.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); font-weight: 700; }
+  .option-btn.wrong { border-color: #ef4444; background: #fee2e2; color: #dc2626; }
+  .option-btn:disabled { cursor: default; }
+  .option-letter {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--border); display: flex; align-items: center;
+    justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+    color: var(--primary);
+  }
+  .option-btn.correct .option-letter { background: var(--success); color: #fff; }
+  .option-btn.wrong .option-letter { background: #ef4444; color: #fff; }
+  .feedback-box {
+    padding: 14px 18px; border-radius: 12px; font-size: 0.95rem;
+    line-height: 1.7; margin-top: 12px; display: none;
+  }
+  .feedback-box.show { display: block; }
+  .feedback-box.correct-fb { background: var(--success-bg); color: #065f46; border-left: 4px solid var(--success); }
+  .feedback-box.wrong-fb { background: var(--warn-bg); color: #78350f; border-left: 4px solid var(--warn); }
+  .result-card {
+    background: var(--bg-card); border-radius: 18px;
+    padding: 36px 28px; text-align: center;
+    border: 1px solid var(--border); box-shadow: var(--shadow);
+  }
+  .result-emoji { font-size: 3.5rem; margin-bottom: 12px; }
+  .result-title { font-size: 1.6rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 8px; }
+  .result-score { font-size: 3rem; font-weight: 900; color: var(--primary); margin: 12px 0; }
+  .result-msg { font-size: 1rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.7; }
+
+  /* ===== MODALS ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(30,27,75,0.45); z-index: 100;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-card); border-radius: 20px;
+    padding: 32px; max-width: 420px; width: 90%;
+    box-shadow: 0 20px 60px rgba(79,70,229,0.2);
+    position: relative;
+  }
+  .modal h2 { font-size: 1.25rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 8px; }
+  .modal p { font-size: 0.93rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 16px; }
+  .modal-close {
+    position: absolute; top: 16px; right: 18px;
+    background: none; border: none; cursor: pointer;
+    font-size: 1.3rem; color: var(--text-muted);
+    padding: 4px; border-radius: 8px;
+  }
+  .modal-close:hover { background: var(--border); }
+  .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .input-group label { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+  .input-group input {
+    padding: 12px 14px; border-radius: 10px;
+    border: 2px solid var(--border); font-size: 0.95rem;
+    outline: none; transition: border 0.15s; color: var(--text);
+  }
+  .input-group input:focus { border-color: var(--primary-light); }
+  .api-note {
+    font-size: 0.82rem; color: var(--text-muted);
+    background: var(--border); padding: 10px 14px; border-radius: 8px;
+    margin-bottom: 16px; line-height: 1.6;
+  }
+
+  /* ===== CHAT ===== */
+  .chat-fab {
+    position: fixed; bottom: 28px; right: 28px; z-index: 50;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none; cursor: pointer; box-shadow: 0 6px 24px rgba(79,70,229,0.4);
+    font-size: 1.6rem; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s;
+  }
+  .chat-fab:hover { transform: scale(1.08); }
+  .chat-window {
+    position: fixed; bottom: 100px; right: 28px; z-index: 50;
+    width: 340px; max-width: calc(100vw - 40px);
+    background: var(--bg-card); border-radius: 20px;
+    box-shadow: 0 12px 48px rgba(79,70,229,0.22);
+    border: 1px solid var(--border);
+    display: none; flex-direction: column; overflow: hidden;
+    max-height: 480px;
+  }
+  .chat-window.open { display: flex; }
+  .chat-header {
+    padding: 16px 18px; background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: #fff; font-weight: 700; font-size: 1rem;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .chat-header button { background: none; border: none; color: rgba(255,255,255,0.8); cursor: pointer; font-size: 1.2rem; }
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 14px;
+    display: flex; flex-direction: column; gap: 10px;
+    min-height: 200px;
+  }
+  .msg {
+    max-width: 88%; padding: 10px 14px; border-radius: 14px;
+    font-size: 0.92rem; line-height: 1.6;
+  }
+  .msg.user {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: #fff; align-self: flex-end; border-bottom-right-radius: 4px;
+  }
+  .msg.ai {
+    background: var(--bg); color: var(--text);
+    align-self: flex-start; border-bottom-left-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .msg.ai.error { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+  .chat-input-row {
+    display: flex; gap: 8px; padding: 12px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .chat-input-row input {
+    flex: 1; padding: 10px 12px; border-radius: 10px;
+    border: 2px solid var(--border); font-size: 0.9rem; outline: none;
+    transition: border 0.15s;
+  }
+  .chat-input-row input:focus { border-color: var(--primary-light); }
+  .chat-input-row button {
+    padding: 10px 16px; border-radius: 10px; border: none;
+    background: var(--primary); color: #fff; font-weight: 700;
+    cursor: pointer; font-size: 0.9rem; transition: background 0.15s;
+  }
+  .chat-input-row button:hover { background: var(--primary-dark); }
+  .chat-no-key {
+    padding: 20px; text-align: center;
+    display: flex; flex-direction: column; gap: 12px; align-items: center;
+  }
+  .chat-no-key p { font-size: 0.93rem; color: var(--text-muted); line-height: 1.6; }
+  .typing-dots span {
+    display: inline-block; width: 7px; height: 7px;
+    background: var(--primary-light); border-radius: 50%;
+    margin: 0 2px; animation: blink 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 700px) {
+    .concept-body { flex-direction: column; overflow: visible; }
+    .concept-right { max-width: 100%; padding: 16px; }
+    .concept-left { border-right: none; border-bottom: 1px solid var(--border); }
+    .start-btns .btn { font-size: 1rem; padding: 14px 24px; }
+    .start-title { font-size: 1.7rem; }
+    canvas { width: 100% !important; height: auto !important; }
+  }
+  @media (max-width: 480px) {
+    .practice-body { padding: 16px 12px; }
+    .question-card { padding: 20px 16px; }
+    .chat-window { right: 12px; width: calc(100vw - 24px); }
+    .chat-fab { right: 16px; bottom: 20px; }
+  }
+  sup { font-size: 0.7em; vertical-align: super; }
+  sub { font-size: 0.7em; vertical-align: sub; }
+
+  /* step description areas */
+  .step-desc {
+    background: #f0f4ff; border-radius: 10px; padding: 12px 14px;
+    font-size: 0.9rem; line-height: 1.7; color: var(--text); min-height: 60px;
+    border-left: 3px solid var(--primary-light);
+    transition: all 0.3s;
+  }
+</style>
+</head>
+<body>
+
+<!-- ======================================================
+     SCREEN 1: START
+====================================================== -->
+<div id="screen-start" class="screen active">
+  <button class="start-gear" onclick="openSettings()" title="AI 수학쌤 설정">⚙️</button>
+  <div class="start-content">
+    <div class="start-icon">📐</div>
+    <h1 class="start-title">미분·적분<br>시각화 학습</h1>
+    <p class="start-subtitle">
+      공식을 외우기 전에, 먼저 <strong>왜 그런지</strong>를 그림으로 이해해요.<br>
+      그래프를 직접 움직이며 미분과 적분의 진짜 의미를 발견해 보세요.
+    </p>
+    <div class="start-btns">
+      <button class="btn btn-primary" onclick="goTo('screen-diff')">📈 미분 배우기</button>
+      <button class="btn btn-outline" onclick="goTo('screen-integ')">📊 적분 배우기</button>
+    </div>
+    <div class="start-badge">✨ 설치 없이 브라우저에서 바로 시작</div>
+  </div>
+</div>
+
+<!-- ======================================================
+     SCREEN 2: DIFFERENTIATION CONCEPT
+====================================================== -->
+<div id="screen-diff" class="screen">
+  <div class="topnav">
+    <button class="btn-back" onclick="goTo('screen-start')">← 홈</button>
+    <div class="logo">미분의 의미</div>
+    <button class="btn-icon" onclick="openSettings()">⚙️</button>
+  </div>
+  <div class="concept-body">
+    <!-- LEFT: GRAPH -->
+    <div class="concept-left">
+      <div class="steps-row" style="margin-bottom:14px;">
+        <button class="btn-step active" id="diff-step1-btn" onclick="setDiffStep(1)">1단계</button>
+        <button class="btn-step" id="diff-step2-btn" onclick="setDiffStep(2)">2단계</button>
+        <button class="btn-step" id="diff-step3-btn" onclick="setDiffStep(3)">3단계</button>
+      </div>
+      <div class="step-desc" id="diff-step-desc">
+        📍 <strong>1단계: 두 점 사이의 평균변화율</strong><br>
+        함수 y = x² 위의 두 점 P와 Q를 이은 직선의 기울기가 "평균변화율"이에요.
+      </div>
+      <canvas id="diff-canvas" width="480" height="340" style="margin-top:14px;"></canvas>
+      <div class="graph-label">y = x² 그래프 · 슬라이더로 점 P를 움직여 보세요</div>
+      <div class="slider-row">
+        <label>점 P의 x</label>
+        <input type="range" id="diff-x-slider" min="-25" max="25" value="5" step="1"
+               oninput="onDiffSlider(this.value)">
+        <span class="slider-val" id="diff-x-val">0.5</span>
+      </div>
+      <div class="slider-row" id="diff-h-row">
+        <label>간격 h</label>
+        <input type="range" id="diff-h-slider" min="1" max="30" value="20" step="1"
+               oninput="onDiffHSlider(this.value)">
+        <span class="slider-val" id="diff-h-val">2.0</span>
+      </div>
+    </div>
+    <!-- RIGHT: EXPLANATION -->
+    <div class="concept-right">
+      <div class="section-title">미분이란?</div>
+      <div class="info-box">
+        <p>🚗 <strong>미분은 어떤 순간의 변화 속도를 재는 것이에요.</strong><br>
+        자동차 속도계처럼, 바로 그 순간 얼마나 빠르게 변하는지 알 수 있어요.</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-label">점 P의 좌표</div>
+          <div class="stat-val" id="diff-p-coord">(0.5, 0.25)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label" id="diff-slope-label">접선 기울기</div>
+          <div class="stat-val" id="diff-slope-val">1.00</div>
+        </div>
+      </div>
+      <div class="concept-card" id="diff-explain-card">
+        <h3 id="diff-card-title">📐 평균변화율</h3>
+        <p id="diff-card-body">두 점 P(x, x²)와 Q(x+h, (x+h)²) 사이의<br>
+        기울기 = <strong>Δy / Δx = (2x·h + h²) / h</strong><br><br>
+        슬라이더로 점 P를 움직이거나 간격 h를 바꿔 보세요!</p>
+      </div>
+      <div class="concept-card" style="background:#f8f9ff;">
+        <h3>🔢 미분 공식 미리보기</h3>
+        <p>
+          y = x<sup>n</sup> 이면<br>
+          <strong>y' = n · x<sup>n-1</sup></strong><br><br>
+          예) y = x² → y' = 2x<br>
+          점 P(1, 1)에서 기울기 = 2×1 = <strong>2</strong>
+        </p>
+      </div>
+      <button class="btn btn-primary" style="margin-top:auto;"
+              onclick="goToPractice('diff')">연습 문제로 가기 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================
+     SCREEN 2-2: INTEGRATION CONCEPT
+====================================================== -->
+<div id="screen-integ" class="screen">
+  <div class="topnav">
+    <button class="btn-back" onclick="goTo('screen-start')">← 홈</button>
+    <div class="logo">적분의 의미</div>
+    <button class="btn-icon" onclick="openSettings()">⚙️</button>
+  </div>
+  <div class="concept-body">
+    <!-- LEFT: GRAPH -->
+    <div class="concept-left">
+      <div style="margin-bottom:14px;">
+        <div class="info-box" style="padding:10px 14px;">
+          <p style="font-size:0.88rem;">직사각형 개수를 늘릴수록 넓이 근사값이 정확해져요!</p>
+        </div>
+      </div>
+      <canvas id="integ-canvas" width="480" height="340"></canvas>
+      <div class="graph-label">y = x² 그래프 아래의 넓이 (0 → 2 구간)</div>
+      <div class="slider-row">
+        <label>직사각형 수</label>
+        <input type="range" id="integ-n-slider" min="1" max="80" value="6" step="1"
+               oninput="onIntegSlider(this.value)">
+        <span class="slider-val" id="integ-n-val">6</span>
+      </div>
+      <div class="slider-row">
+        <button class="btn btn-sm btn-outline" onclick="setIntegN(4)">4개</button>
+        <button class="btn btn-sm btn-outline" onclick="setIntegN(10)">10개</button>
+        <button class="btn btn-sm btn-outline" onclick="setIntegN(50)">50개</button>
+        <button class="btn btn-sm btn-primary" onclick="animateInteg()">▶ 자동 증가</button>
+      </div>
+    </div>
+    <!-- RIGHT: EXPLANATION -->
+    <div class="concept-right">
+      <div class="section-title">적분이란?</div>
+      <div class="info-box">
+        <p>🧩 <strong>적분은 잘게 쪼갠 조각들을 다시 더해서 전체 넓이(또는 거리)를 구하는 거예요.</strong><br>
+        직사각형을 더 얇게 쪼갤수록, 더 정확한 답에 가까워져요.</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-label">직사각형 수</div>
+          <div class="stat-val" id="integ-n-display">6</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">넓이 근사값</div>
+          <div class="stat-val" id="integ-area-val">2.667</div>
+        </div>
+      </div>
+      <div class="concept-card">
+        <h3>📏 실제 넓이와 비교</h3>
+        <p>
+          y = x²를 0부터 2까지 적분하면:<br>
+          <strong>∫₀² x² dx = [x³/3]₀² = 8/3 ≈ 2.667</strong><br><br>
+          직사각형이 많아질수록 이 값에 가까워지는 것을 확인해 보세요!
+        </p>
+      </div>
+      <div class="concept-card" style="background:#f8f9ff;">
+        <h3>🔢 적분 공식 미리보기</h3>
+        <p>
+          ∫ x<sup>n</sup> dx = <strong>x<sup>n+1</sup> / (n+1) + C</strong><br><br>
+          예) ∫ x² dx = x³/3 + C<br>
+          예) ∫ 2x dx = x² + C
+        </p>
+      </div>
+      <button class="btn btn-primary" style="margin-top:auto;"
+              onclick="goToPractice('integ')">연습 문제로 가기 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================
+     SCREEN 3: PRACTICE
+====================================================== -->
+<div id="screen-practice" class="screen">
+  <div class="topnav">
+    <button class="btn-back" onclick="goTo('screen-start')">← 홈</button>
+    <div class="logo">연습 문제</div>
+    <button class="btn-icon" onclick="openSettings()">⚙️</button>
+  </div>
+  <div class="practice-body">
+    <!-- TABS -->
+    <div class="practice-tabs">
+      <button class="tab-btn active" id="tab-diff" onclick="switchTab('diff')">📈 미분 연습</button>
+      <button class="tab-btn" id="tab-integ" onclick="switchTab('integ')">📊 적분 연습</button>
+    </div>
+    <!-- PROGRESS -->
+    <div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="practice-progress" style="width:0%"></div>
+      </div>
+      <div class="progress-info">
+        <span id="practice-progress-text">0 / 5 문제</span>
+        <span id="practice-score-text">정답: 0개</span>
+      </div>
+    </div>
+    <!-- QUESTION AREA -->
+    <div id="question-area"></div>
+    <!-- NEXT BUTTON -->
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="btn btn-primary" id="btn-next" style="display:none;"
+              onclick="nextQuestion()">다음 문제 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================
+     SETTINGS MODAL
+====================================================== -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSettings()">✕</button>
+    <h2>⚙️ AI 수학쌤 설정</h2>
+    <p>Gemini API 키를 등록하면 학습 중 궁금한 점을 AI 선생님께 바로 물어볼 수 있어요!</p>
+    <div class="api-note">
+      🔑 Google AI Studio(aistudio.google.com)에서 무료로 API 키를 발급받을 수 있어요.<br>
+      입력한 키는 이 브라우저에만 저장되며, 어떤 외부 서버로도 전송되지 않아요.
+    </div>
+    <div class="input-group">
+      <label>Gemini API 키</label>
+      <input type="password" id="api-key-input" placeholder="AIza..." autocomplete="off">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="saveApiKey()">저장하기</button>
+      <button class="btn btn-outline btn-sm" onclick="clearApiKey()">키 삭제</button>
+    </div>
+    <div id="settings-msg" style="margin-top:12px;font-size:0.88rem;display:none;"></div>
+  </div>
+</div>
+
+<!-- ======================================================
+     CHAT FAB + WINDOW
+====================================================== -->
+<button class="chat-fab" onclick="toggleChat()" title="AI 수학쌤에게 물어보기">🤖</button>
+
+<div class="chat-window" id="chat-window">
+  <div class="chat-header">
+    <span>🤖 AI 수학쌤</span>
+    <button onclick="toggleChat()">✕</button>
+  </div>
+  <!-- shown when no API key -->
+  <div class="chat-no-key" id="chat-nokey">
+    <span style="font-size:2.5rem;">🔑</span>
+    <p>AI 수학쌤을 사용하려면 설정에서<br><strong>Gemini API 키</strong>를 등록해주세요.</p>
+    <button class="btn btn-primary btn-sm" onclick="openSettings();toggleChat();">설정 열기</button>
+  </div>
+  <!-- shown when API key exists -->
+  <div id="chat-main" style="display:none;flex-direction:column;flex:1;overflow:hidden;display:none;">
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg ai">안녕하세요! 미분과 적분에 대해 궁금한 것이 있으면 무엇이든 물어보세요. 😊</div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="질문을 입력하세요..."
+             onkeydown="if(event.key==='Enter')sendChat()">
+      <button onclick="sendChat()">전송</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================
+     JAVASCRIPT
+====================================================== -->
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let currentScreen = 'screen-start';
+let diffStep = 1;
+let diffX = 0.5;
+let diffH = 2.0;
+let integN = 6;
+let integAnimating = false;
+
+let practiceTab = 'diff';
+let practiceQuestions = [];
+let currentQIndex = 0;
+let correctCount = 0;
+let answered = false;
+
+let chatOpen = false;
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goTo(screenId) {
+  document.getElementById(currentScreen).classList.remove('active');
+  currentScreen = screenId;
+  document.getElementById(screenId).classList.add('active');
+  if (screenId === 'screen-diff') initDiffCanvas();
+  if (screenId === 'screen-integ') initIntegCanvas();
+}
+
+function goToPractice(tab) {
+  practiceTab = tab;
+  goTo('screen-practice');
+  switchTab(tab);
+}
+
+// ============================================================
+// SETTINGS / API KEY
+// ============================================================
+function openSettings() {
+  const key = localStorage.getItem('gemini_api_key') || '';
+  document.getElementById('api-key-input').value = key;
+  document.getElementById('settings-msg').style.display = 'none';
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) {
+    showSettingsMsg('API 키를 입력해주세요.', '#dc2626');
+    return;
+  }
+  localStorage.setItem('gemini_api_key', key);
+  showSettingsMsg('✅ 저장되었어요! 이제 AI 수학쌤을 이용할 수 있어요.', '#059669');
+  updateChatUI();
+}
+function clearApiKey() {
+  localStorage.removeItem('gemini_api_key');
+  document.getElementById('api-key-input').value = '';
+  showSettingsMsg('🗑️ API 키가 삭제되었어요.', '#6b7280');
+  updateChatUI();
+}
+function showSettingsMsg(msg, color) {
+  const el = document.getElementById('settings-msg');
+  el.textContent = msg; el.style.color = color; el.style.display = 'block';
+}
+
+// ============================================================
+// DIFFERENTIATION CANVAS
+// ============================================================
+let diffCanvas, diffCtx;
+
+function initDiffCanvas() {
+  diffCanvas = document.getElementById('diff-canvas');
+  diffCtx = diffCanvas.getContext('2d');
+  diffX = parseFloat(document.getElementById('diff-x-slider').value) / 10;
+  diffH = parseFloat(document.getElementById('diff-h-slider').value) / 10;
+  drawDiff();
+}
+
+function onDiffSlider(v) {
+  diffX = v / 10;
+  document.getElementById('diff-x-val').textContent = diffX.toFixed(1);
+  drawDiff();
+}
+function onDiffHSlider(v) {
+  diffH = v / 10;
+  document.getElementById('diff-h-val').textContent = diffH.toFixed(1);
+  drawDiff();
+}
+
+function setDiffStep(step) {
+  diffStep = step;
+  [1,2,3].forEach(i => {
+    document.getElementById('diff-step'+i+'-btn').classList.toggle('active', i === step);
+  });
+  const hRow = document.getElementById('diff-h-row');
+  const stepDesc = document.getElementById('diff-step-desc');
+  const cardTitle = document.getElementById('diff-card-title');
+  const cardBody = document.getElementById('diff-card-body');
+  const slopeLabel = document.getElementById('diff-slope-label');
+
+  if (step === 1) {
+    hRow.style.display = 'flex';
+    stepDesc.innerHTML = '📍 <strong>1단계: 두 점 사이의 평균변화율</strong><br>함수 y = x² 위의 두 점 P와 Q를 이은 직선의 기울기가 "평균변화율"이에요.';
+    cardTitle.textContent = '📐 평균변화율';
+    cardBody.innerHTML = '두 점 P(x, x²)와 Q(x+h, (x+h)²) 사이의<br>기울기 = <strong>Δy / Δx = 2x + h</strong><br><br>슬라이더로 점 P를 움직이거나 간격 h를 바꿔 보세요!';
+    slopeLabel.textContent = '평균변화율';
+    document.getElementById('diff-h-slider').value = 20;
+    diffH = 2.0;
+    document.getElementById('diff-h-val').textContent = '2.0';
+  } else if (step === 2) {
+    hRow.style.display = 'flex';
+    stepDesc.innerHTML = '🔍 <strong>2단계: h를 0에 가깝게 줄여보기</strong><br>간격 h 슬라이더를 왼쪽으로 당겨보세요. 두 점이 점점 가까워져요!';
+    cardTitle.textContent = '🔍 h → 0 으로 수렴';
+    cardBody.innerHTML = 'h가 작아질수록 평균변화율 = <strong>2x + h</strong>는<br>점점 <strong>2x</strong>에 가까워져요.<br><br>h 슬라이더를 최소로 줄여보세요!';
+    slopeLabel.textContent = '평균변화율';
+    document.getElementById('diff-h-slider').value = 10;
+    diffH = 1.0;
+    document.getElementById('diff-h-val').textContent = '1.0';
+  } else {
+    hRow.style.display = 'none';
+    stepDesc.innerHTML = '✨ <strong>3단계: 순간변화율 = 접선의 기울기</strong><br>h가 0이 되면, 평균변화율은 <strong>순간변화율</strong>이 돼요. 이게 바로 미분(도함수)이에요!';
+    cardTitle.textContent = '✨ 순간변화율 = 미분';
+    cardBody.innerHTML = 'y = x²의 도함수:<br><strong>y\' = 2x</strong><br><br>점 P(x, x²)에서 접선의 기울기 = <strong>2x</strong><br>슬라이더로 x를 바꾸며 확인해 보세요!';
+    slopeLabel.textContent = '접선 기울기';
+    diffH = 0;
+  }
+  drawDiff();
+}
+
+function drawDiff() {
+  if (!diffCanvas) return;
+  const W = diffCanvas.width, H = diffCanvas.height;
+  const ctx = diffCtx;
+  ctx.clearRect(0, 0, W, H);
+
+  // coordinate mapping: x ∈ [-3, 3], y ∈ [-0.5, 9]
+  const xMin = -3, xMax = 3, yMin = -0.5, yMax = 9.5;
+  const toCanvasX = x => (x - xMin) / (xMax - xMin) * W;
+  const toCanvasY = y => H - (y - yMin) / (yMax - yMin) * H;
+
+  // background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  // grid
+  ctx.strokeStyle = '#e8eaf6'; ctx.lineWidth = 1;
+  for (let gx = -3; gx <= 3; gx++) {
+    ctx.beginPath(); ctx.moveTo(toCanvasX(gx), 0); ctx.lineTo(toCanvasX(gx), H); ctx.stroke();
+  }
+  for (let gy = 0; gy <= 9; gy++) {
+    ctx.beginPath(); ctx.moveTo(0, toCanvasY(gy)); ctx.lineTo(W, toCanvasY(gy)); ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, toCanvasY(0)); ctx.lineTo(W, toCanvasY(0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(toCanvasX(0), 0); ctx.lineTo(toCanvasX(0), H); ctx.stroke();
+  ctx.fillStyle = '#9ca3af'; ctx.font = '12px sans-serif';
+  for (let i = -2; i <= 3; i++) if (i !== 0) {
+    ctx.fillText(i, toCanvasX(i) - 4, toCanvasY(0) + 14);
+  }
+  ctx.fillText('x', W - 14, toCanvasY(0) - 6);
+  ctx.fillText('y', toCanvasX(0) + 6, 14);
+
+  // curve y = x²
+  ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let px = 0; px <= W; px++) {
+    const x = xMin + (xMax - xMin) * px / W;
+    const y = x * x;
+    if (px === 0) ctx.moveTo(px, toCanvasY(y));
+    else ctx.lineTo(px, toCanvasY(y));
+  }
+  ctx.stroke();
+
+  // Point P
+  const px = diffX, py = diffX * diffX;
+  const cpx = toCanvasX(px), cpy = toCanvasY(py);
+
+  if (diffStep === 1 || diffStep === 2) {
+    // point Q
+    const qx = diffX + diffH, qy = qx * qx;
+    const cqx = toCanvasX(qx), cqy = toCanvasY(qy);
+
+    // secant line
+    const slope = (qy - py) / (qx - px + 0.0001);
+    const lineX1 = xMin, lineY1 = py + slope * (xMin - px);
+    const lineX2 = xMax, lineY2 = py + slope * (xMax - px);
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(toCanvasX(lineX1), toCanvasY(lineY1));
+    ctx.lineTo(toCanvasX(lineX2), toCanvasY(lineY2));
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // h bracket
+    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(cpx, cpy); ctx.lineTo(cqx, cpy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cqx, cpy); ctx.lineTo(cqx, cqy); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#10b981'; ctx.font = '11px sans-serif';
+    ctx.fillText('h', (cpx + cqx) / 2 - 4, cpy + 14);
+    ctx.fillText('Δy', cqx + 4, (cpy + cqy) / 2);
+
+    // Q dot
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.arc(cqx, cqy, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(cqx, cqy, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#92400e'; ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('Q', cqx + 8, cqy - 6);
+
+    // slope display
+    const avgSlope = (qy - py) / diffH;
+    document.getElementById('diff-slope-val').textContent = avgSlope.toFixed(2);
+    document.getElementById('diff-p-coord').textContent =
+      '(' + px.toFixed(1) + ', ' + py.toFixed(2) + ')';
+  } else {
+    // tangent line
+    const slope = 2 * diffX;
+    const lineX1 = xMin, lineY1 = py + slope * (xMin - px);
+    const lineX2 = xMax, lineY2 = py + slope * (xMax - px);
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(toCanvasX(lineX1), toCanvasY(lineY1));
+    ctx.lineTo(toCanvasX(lineX2), toCanvasY(lineY2));
+    ctx.stroke();
+    document.getElementById('diff-slope-val').textContent = slope.toFixed(2);
+    document.getElementById('diff-p-coord').textContent =
+      '(' + px.toFixed(1) + ', ' + py.toFixed(2) + ')';
+  }
+
+  // P dot
+  ctx.fillStyle = '#4f46e5';
+  ctx.beginPath(); ctx.arc(cpx, cpy, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(cpx, cpy, 3.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#3730a3'; ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('P', cpx + 9, cpy - 8);
+
+  // label
+  ctx.fillStyle = '#4f46e5'; ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('y = x²', toCanvasX(2.2), toCanvasY(4.8) - 8);
+}
+
+// ============================================================
+// INTEGRATION CANVAS
+// ============================================================
+let integCanvas, integCtx;
+
+function initIntegCanvas() {
+  integCanvas = document.getElementById('integ-canvas');
+  integCtx = integCanvas.getContext('2d');
+  drawInteg();
+}
+
+function onIntegSlider(v) {
+  integN = parseInt(v);
+  document.getElementById('integ-n-val').textContent = integN;
+  document.getElementById('integ-n-display').textContent = integN;
+  drawInteg();
+}
+function setIntegN(n) {
+  integN = n;
+  document.getElementById('integ-n-slider').value = n;
+  document.getElementById('integ-n-val').textContent = n;
+  document.getElementById('integ-n-display').textContent = n;
+  drawInteg();
+}
+
+function animateInteg() {
+  if (integAnimating) return;
+  integAnimating = true;
+  let n = 2;
+  const step = () => {
+    if (n > 80) { integAnimating = false; return; }
+    setIntegN(n);
+    n = n < 20 ? n + 1 : n < 50 ? n + 2 : n + 5;
+    setTimeout(step, 80);
+  };
+  step();
+}
+
+function drawInteg() {
+  if (!integCanvas) return;
+  const W = integCanvas.width, H = integCanvas.height;
+  const ctx = integCtx;
+  ctx.clearRect(0, 0, W, H);
+
+  const xMin = -0.3, xMax = 2.5, yMin = -0.3, yMax = 5;
+  const a = 0, b = 2;
+  const toCanvasX = x => (x - xMin) / (xMax - xMin) * W;
+  const toCanvasY = y => H - (y - yMin) / (yMax - yMin) * H;
+
+  // background
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+
+  // grid
+  ctx.strokeStyle = '#e8eaf6'; ctx.lineWidth = 1;
+  for (let gx = 0; gx <= 2; gx += 0.5) {
+    ctx.beginPath(); ctx.moveTo(toCanvasX(gx), 0); ctx.lineTo(toCanvasX(gx), H); ctx.stroke();
+  }
+  for (let gy = 0; gy <= 4; gy++) {
+    ctx.beginPath(); ctx.moveTo(0, toCanvasY(gy)); ctx.lineTo(W, toCanvasY(gy)); ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, toCanvasY(0)); ctx.lineTo(W, toCanvasY(0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(toCanvasX(0), 0); ctx.lineTo(toCanvasX(0), H); ctx.stroke();
+  ctx.fillStyle = '#9ca3af'; ctx.font = '12px sans-serif';
+  [0,1,2].forEach(i => ctx.fillText(i, toCanvasX(i) - 4, toCanvasY(0) + 14));
+  [1,2,3,4].forEach(i => ctx.fillText(i, toCanvasX(0) + 4, toCanvasY(i) + 4));
+
+  // Riemann rectangles
+  const dx = (b - a) / integN;
+  let areaSum = 0;
+  for (let i = 0; i < integN; i++) {
+    const xi = a + i * dx;
+    const fi = xi * xi; // left Riemann
+    areaSum += fi * dx;
+    const rx = toCanvasX(xi);
+    const rw = toCanvasX(xi + dx) - toCanvasX(xi);
+    const rh = toCanvasY(0) - toCanvasY(fi);
+    const ry = toCanvasY(fi);
+    // fill with gradient
+    const alpha = 0.35 + 0.3 * (i / integN);
+    ctx.fillStyle = `rgba(124,58,237,${alpha})`;
+    ctx.fillRect(rx, ry, rw, rh);
+    ctx.strokeStyle = 'rgba(79,70,229,0.5)';
+    ctx.lineWidth = integN <= 20 ? 1 : 0.3;
+    ctx.strokeRect(rx, ry, rw, rh);
+  }
+
+  // shaded exact area label
+  const exactArea = 8 / 3;
+  const pct = Math.min(areaSum / exactArea, 1);
+  const col = pct > 0.99 ? '#059669' : '#7c3aed';
+
+  document.getElementById('integ-area-val').textContent = areaSum.toFixed(4);
+  // color by accuracy
+  document.getElementById('integ-area-val').style.color = col;
+
+  // curve y = x²
+  ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let px = 0; px <= W; px++) {
+    const x = xMin + (xMax - xMin) * px / W;
+    const y = x * x;
+    if (px === 0) ctx.moveTo(px, toCanvasY(y));
+    else ctx.lineTo(px, toCanvasY(y));
+  }
+  ctx.stroke();
+
+  // label
+  ctx.fillStyle = '#4f46e5'; ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('y = x²', toCanvasX(2.0), toCanvasY(4.2));
+  ctx.fillStyle = '#7c3aed'; ctx.font = '12px sans-serif';
+  ctx.fillText(`≈ ${areaSum.toFixed(3)}`, toCanvasX(0.05), toCanvasY(0) - 6);
+  ctx.fillStyle = '#059669'; ctx.font = '12px sans-serif';
+  ctx.fillText(`정확: 2.667`, toCanvasX(0.05), toCanvasY(0) - 20);
+}
+
+// ============================================================
+// PRACTICE PROBLEMS
+// ============================================================
+const diffProblems = [
+  {
+    q: 'y = x² 를 미분하면?',
+    opts: ['y\' = 2x', 'y\' = x', 'y\' = 2x²', 'y\' = x² + 1'],
+    ans: 0,
+    hint: '거듭제곱 미분법칙: y = xⁿ → y\' = n·xⁿ⁻¹<br>y = x² = x² 이므로 n=2 → y\' = 2·x²⁻¹ = 2x'
+  },
+  {
+    q: 'y = 2x³ 를 미분하면?',
+    opts: ['y\' = 6x²', 'y\' = 3x²', 'y\' = 2x²', 'y\' = 6x³'],
+    ans: 0,
+    hint: '상수 배는 그대로, xⁿ에 법칙 적용.<br>y = 2·x³ → y\' = 2·(3x²) = 6x²'
+  },
+  {
+    q: 'y = x² + 3x 를 미분하면?',
+    opts: ['y\' = 2x + 3', 'y\' = 2x + 3x', 'y\' = x + 3', 'y\' = 2x'],
+    ans: 0,
+    hint: '각 항을 따로 미분해요.<br>(x²)\' = 2x, (3x)\' = 3<br>→ y\' = 2x + 3'
+  },
+  {
+    q: 'y = 4x³ − 5 를 미분하면?',
+    opts: ['y\' = 12x²', 'y\' = 4x² − 5', 'y\' = 12x² − 5', 'y\' = 4x³'],
+    ans: 0,
+    hint: '상수항을 미분하면 0이 돼요.<br>y = 4x³ − 5 → y\' = 12x² − 0 = 12x²'
+  },
+  {
+    q: 'y = x⁴ + 2x² − x 를 미분하면?',
+    opts: ['y\' = 4x³ + 4x − 1', 'y\' = 4x³ + 2x', 'y\' = x³ + 4x − 1', 'y\' = 4x³ + 4x + 1'],
+    ans: 0,
+    hint: '각 항: (x⁴)\' = 4x³, (2x²)\' = 4x, (x)\' = 1<br>→ y\' = 4x³ + 4x − 1'
+  }
+];
+
+const integProblems = [
+  {
+    q: '∫ 2x dx 를 구하면? (적분상수 C 포함)',
+    opts: ['x² + C', '2x² + C', 'x + C', '2 + C'],
+    ans: 0,
+    hint: '공식: ∫ xⁿ dx = xⁿ⁺¹/(n+1) + C<br>∫ 2x dx = 2 · x²/2 + C = x² + C'
+  },
+  {
+    q: '∫ 6x² dx 를 구하면?',
+    opts: ['2x³ + C', '6x³ + C', '3x² + C', '6x + C'],
+    ans: 0,
+    hint: '∫ 6x² dx = 6 · x³/3 + C = 2x³ + C'
+  },
+  {
+    q: '∫ (3x² + 4x) dx 를 구하면?',
+    opts: ['x³ + 2x² + C', '3x³ + 4x² + C', '6x + 4 + C', 'x² + 2x + C'],
+    ans: 0,
+    hint: '각 항을 따로 적분해요.<br>∫3x²dx = x³, ∫4xdx = 2x²<br>→ x³ + 2x² + C'
+  },
+  {
+    q: '∫ 4x³ dx 를 구하면?',
+    opts: ['x⁴ + C', '4x⁴ + C', 'x³ + C', '12x² + C'],
+    ans: 0,
+    hint: '∫ 4x³ dx = 4 · x⁴/4 + C = x⁴ + C'
+  },
+  {
+    q: '∫ (x² − 2x + 1) dx 를 구하면?',
+    opts: ['x³/3 − x² + x + C', 'x³ − x² + x + C', 'x³/3 − 2x + C', '2x − 2 + C'],
+    ans: 0,
+    hint: '각 항: ∫x²dx = x³/3, ∫2xdx = x², ∫1dx = x<br>→ x³/3 − x² + x + C'
+  }
+];
+
+function switchTab(tab) {
+  practiceTab = tab;
+  document.getElementById('tab-diff').classList.toggle('active', tab === 'diff');
+  document.getElementById('tab-integ').classList.toggle('active', tab === 'integ');
+  practiceQuestions = tab === 'diff' ? [...diffProblems] : [...integProblems];
+  currentQIndex = 0; correctCount = 0; answered = false;
+  updateProgress();
+  renderQuestion();
+}
+
+function updateProgress() {
+  const pct = (currentQIndex / 5) * 100;
+  document.getElementById('practice-progress').style.width = pct + '%';
+  document.getElementById('practice-progress-text').textContent = currentQIndex + ' / 5 문제';
+  document.getElementById('practice-score-text').textContent = '정답: ' + correctCount + '개';
+}
+
+function renderQuestion() {
+  const area = document.getElementById('question-area');
+  if (currentQIndex >= practiceQuestions.length) {
+    renderResult(); return;
+  }
+  answered = false;
+  document.getElementById('btn-next').style.display = 'none';
+  const q = practiceQuestions[currentQIndex];
+  const letters = ['①', '②', '③', '④'];
+  const formatted = q.q.replace(/x²/g,'x<sup>2</sup>').replace(/x³/g,'x<sup>3</sup>')
+    .replace(/x⁴/g,'x<sup>4</sup>').replace(/xⁿ/g,'x<sup>n</sup>').replace(/xⁿ⁺¹/g,'x<sup>n+1</sup>');
+  area.innerHTML = `
+    <div class="question-card">
+      <div class="q-number">${practiceTab === 'diff' ? '미분' : '적분'} 문제 ${currentQIndex + 1} / 5</div>
+      <div class="q-text">${formatted}</div>
+      <div class="options-grid" id="options-grid">
+        ${q.opts.map((opt, i) => `
+          <button class="option-btn" id="opt-${i}" onclick="selectOption(${i})">
+            <span class="option-letter">${letters[i]}</span>
+            <span>${opt.replace(/x²/g,'x<sup>2</sup>').replace(/x³/g,'x<sup>3</sup>').replace(/x⁴/g,'x<sup>4</sup>').replace(/x⁵/g,'x<sup>5</sup>')}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="feedback-box" id="feedback-box"></div>
+    </div>`;
+}
+
+function selectOption(idx) {
+  if (answered) return;
+  answered = true;
+  const q = practiceQuestions[currentQIndex];
+  const fb = document.getElementById('feedback-box');
+  for (let i = 0; i < 4; i++) {
+    const btn = document.getElementById('opt-' + i);
+    if (btn) btn.disabled = true;
+  }
+  const chosen = document.getElementById('opt-' + idx);
+  const correctBtn = document.getElementById('opt-' + q.ans);
+  if (idx === q.ans) {
+    chosen.classList.add('correct');
+    fb.className = 'feedback-box show correct-fb';
+    fb.innerHTML = '✅ <strong>정확해요!</strong> 잘 이해하고 있네요. 다음 문제로 가볼까요?';
+    correctCount++;
+  } else {
+    chosen.classList.add('wrong');
+    correctBtn.classList.add('correct');
+    fb.className = 'feedback-box show wrong-fb';
+    fb.innerHTML = '💡 <strong>아직 괜찮아요!</strong> 다시 한 번 살펴볼게요.<br>' + q.hint;
+  }
+  document.getElementById('btn-next').style.display = 'inline-flex';
+  currentQIndex++;
+  updateProgress();
+}
+
+function nextQuestion() {
+  document.getElementById('btn-next').style.display = 'none';
+  renderQuestion();
+}
+
+function renderResult() {
+  const pct = Math.round(correctCount / 5 * 100);
+  let emoji = pct >= 80 ? '🏆' : pct >= 60 ? '🌟' : '💪';
+  let msg = pct >= 80
+    ? '훌륭해요! 개념을 잘 이해하고 있어요. 더 어려운 문제에도 도전해 보세요!'
+    : pct >= 60
+    ? '잘 하고 있어요! 틀린 문제의 힌트를 다시 읽어보면 완벽해질 거예요.'
+    : '처음엔 누구나 어려워요. 개념 설명을 다시 보고 오면 훨씬 쉬워질 거예요!';
+
+  document.getElementById('question-area').innerHTML = `
+    <div class="result-card">
+      <div class="result-emoji">${emoji}</div>
+      <div class="result-title">문제 풀이 완료!</div>
+      <div class="result-score">${correctCount} / 5</div>
+      <div style="margin-bottom:12px;">
+        <div class="progress-bar-wrap" style="height:12px;">
+          <div class="progress-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <div style="text-align:center;margin-top:6px;font-size:0.9rem;color:var(--text-muted);">정답률 ${pct}%</div>
+      </div>
+      <div class="result-msg">${msg}</div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="switchTab(practiceTab)">🔄 다시 풀기</button>
+        <button class="btn btn-primary" onclick="goTo('screen-start')">🏠 홈으로</button>
+      </div>
+    </div>`;
+  document.getElementById('btn-next').style.display = 'none';
+  document.getElementById('practice-progress').style.width = '100%';
+  document.getElementById('practice-progress-text').textContent = '5 / 5 문제';
+  document.getElementById('practice-score-text').textContent = '정답: ' + correctCount + '개';
+}
+
+// ============================================================
+// CHAT
+// ============================================================
+function updateChatUI() {
+  const key = localStorage.getItem('gemini_api_key');
+  document.getElementById('chat-nokey').style.display = key ? 'none' : 'flex';
+  const main = document.getElementById('chat-main');
+  main.style.display = key ? 'flex' : 'none';
+  main.style.flexDirection = key ? 'column' : 'none';
+}
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  const win = document.getElementById('chat-window');
+  win.classList.toggle('open', chatOpen);
+  if (chatOpen) updateChatUI();
+}
+
+function addMsg(text, type) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + type;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addMsg(text, 'user');
+  showTyping();
+
+  const key = localStorage.getItem('gemini_api_key');
+  if (!key) { removeTyping(); addMsg('API 키가 없어요. 설정에서 등록해주세요.', 'ai error'); return; }
+
+  const systemPrompt = `너는 중고등학생을 가르치는 친절한 수학 선생님이야. 미분과 적분에 대한 질문에 답할 때는 어려운 용어를 풀어서 설명하고, 가능하면 일상적인 비유(속도계, 넓이 채우기 등)를 들어 쉽게 설명해. 공식만 던지지 말고 왜 그런지 직관을 먼저 설명해.`;
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': key
+        },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: 'user', parts: [{ text }] }]
+        })
+      }
+    );
+    removeTyping();
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const errMsg = err?.error?.message || res.statusText;
+      addMsg('지금은 답변을 가져올 수 없어요. API 키를 다시 확인해주세요. (' + errMsg + ')', 'ai error');
+      return;
+    }
+    const data = await res.json();
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (reply) addMsg(reply, 'ai');
+    else addMsg('응답을 받았지만 내용이 비어있어요. 다시 시도해 주세요.', 'ai error');
+  } catch (e) {
+    removeTyping();
+    addMsg('네트워크 오류가 발생했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.', 'ai error');
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // restore API key display
+  updateChatUI();
+
+  // init sliders display
+  document.getElementById('diff-x-val').textContent =
+    (document.getElementById('diff-x-slider').value / 10).toFixed(1);
+  document.getElementById('diff-h-val').textContent =
+    (document.getElementById('diff-h-slider').value / 10).toFixed(1);
+
+  // draw canvases when screens are visited
+  // screens are lazy-initialized
+});
+
+// Re-draw on window resize
+window.addEventListener('resize', () => {
+  if (currentScreen === 'screen-diff') drawDiff();
+  if (currentScreen === 'screen-integ') drawInteg();
+});
+
+// Initialize practice tab on first visit
+document.getElementById('screen-practice').addEventListener('transitionend', () => {});
+// Ensure practice loads correctly
+function initPractice() {
+  if (!practiceQuestions.length) switchTab(practiceTab);
+}
+// Override goTo to call initPractice
+const _goTo = goTo;
+window.goTo = function(id) {
+  _goTo(id);
+  if (id === 'screen-practice') initPractice();
+};
+window.goToPractice = function(tab) {
+  practiceTab = tab;
+  _goTo('screen-practice');
+  switchTab(tab);
+};
+
+// close modal on overlay click
+document.getElementById('settings-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+</script>
+</body>
+</html>
