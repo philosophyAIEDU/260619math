@@ -150,14 +150,14 @@
   /* ===== CONCEPT SCREENS ===== */
   .concept-body { flex: 1; display: flex; overflow: hidden; }
   .concept-left {
-    flex: 1.1; min-width: 0; background: var(--graph-bg);
+    flex: 0 0 auto; min-width: 0; background: var(--graph-bg);
     display: flex; flex-direction: column;
-    border-right: 1px solid var(--border); padding: 16px;
-    overflow-y: auto;
+    border-right: 1px solid var(--border); padding: 14px 16px;
+    overflow-y: auto; width: fit-content; max-width: 420px;
   }
   .concept-right {
-    flex: 0.9; min-width: 280px; max-width: 400px;
-    padding: 20px 18px; display: flex; flex-direction: column; gap: 12px;
+    flex: 1; min-width: 260px;
+    padding: 18px 16px; display: flex; flex-direction: column; gap: 12px;
     overflow-y: auto;
   }
   canvas {
@@ -403,8 +403,8 @@
   /* ===== RESPONSIVE ===== */
   @media (max-width: 720px) {
     .concept-body { flex-direction: column; overflow: visible; }
-    .concept-right { max-width: 100%; padding: 14px; }
-    .concept-left { border-right: none; border-bottom: 1px solid var(--border); }
+    .concept-right { max-width: 100%; padding: 14px; min-width: 0; }
+    .concept-left { border-right: none; border-bottom: 1px solid var(--border); max-width: 100%; width: 100%; }
     .start-btns .btn { font-size: 0.97rem; padding: 13px 22px; }
     .start-title { font-size: 1.65rem; }
   }
@@ -490,7 +490,7 @@
         <button class="size-btn" id="size-l" onclick="setGraphSize('l')">🔎 크게</button>
       </div>
 
-      <canvas id="diff-canvas" width="460" height="320"></canvas>
+      <canvas id="diff-canvas" width="340" height="238"></canvas>
       <div class="graph-label">y = x² 그래프 · 슬라이더로 점 P를 움직여 보세요</div>
       <div class="slider-row">
         <label>점 P의 x</label>
@@ -593,7 +593,7 @@
         <button class="size-btn" id="size-l2" onclick="setGraphSize('l')">🔎 크게</button>
       </div>
 
-      <canvas id="integ-canvas" width="460" height="320" style="margin-top:10px;"></canvas>
+      <canvas id="integ-canvas" width="340" height="238" style="margin-top:10px;"></canvas>
       <div class="graph-label">y = x² 그래프 아래의 넓이 (0 → 2 구간)</div>
 
       <div class="slider-row">
@@ -783,7 +783,7 @@ let answered = false;
 let chatOpen = false;
 
 // Canvas size map: [width, height]
-const GRAPH_SIZES = { s: [300, 210], m: [460, 320], l: [620, 430] };
+const GRAPH_SIZES = { s: [240, 168], m: [340, 238], l: [480, 336] };
 
 // ============================================================
 // LEVEL MODE
